@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Tạo bảng users
+        // 1. Tạo bảng users trước (vì farms phụ thuộc vào users)
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -20,12 +20,11 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('role', ['admin', 'staff', 'user'])->default('user');
-            $table->foreignId('farm_id')->nullable()->constrained('farms');
             $table->rememberToken();
             $table->timestamps();
         });
 
-        // Tạo bảng farms
+        // 2. Tạo bảng farms (vì các bảng khác phụ thuộc vào farms)
         Schema::create('farms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -37,7 +36,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng squid_types
+        // 3. Thêm farm_id vào bảng users
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('farm_id')->nullable()->after('role')->constrained('farms');
+        });
+
+        // 4. Tạo các bảng phụ thuộc vào farms
         Schema::create('squid_types', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -46,7 +50,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng boats
         Schema::create('boats', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -57,7 +60,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng customers
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -68,7 +70,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng purchases
+        // 5. Tạo các bảng giao dịch (phụ thuộc vào boats, customers, squid_types)
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
             $table->foreignId('boat_id')->constrained()->onDelete('cascade');
@@ -82,7 +84,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng sales
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
@@ -97,7 +98,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng expenses
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->string('expense_type'); // loại chi phí (xăng, đá, vận chuyển...)
@@ -108,14 +108,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng password_reset_tokens
+        // 6. Tạo các bảng hệ thống của Laravel
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
-        // Tạo bảng sessions
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
@@ -125,7 +124,6 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
 
-        // Tạo bảng personal_access_tokens
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable');
@@ -137,21 +135,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng cache
         Schema::create('cache', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->mediumText('value');
             $table->integer('expiration');
         });
 
-        // Tạo bảng cache_locks
         Schema::create('cache_locks', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->string('owner');
             $table->integer('expiration');
         });
 
-        // Tạo bảng jobs
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
@@ -162,7 +157,6 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
-        // Tạo bảng job_batches
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
@@ -176,7 +170,6 @@ return new class extends Migration
             $table->integer('finished_at')->nullable();
         });
 
-        // Tạo bảng failed_jobs
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -193,6 +186,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Xóa theo thứ tự ngược lại để tránh lỗi khóa ngoại
         Schema::dropIfExists('failed_jobs');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('jobs');
@@ -207,6 +201,10 @@ return new class extends Migration
         Schema::dropIfExists('customers');
         Schema::dropIfExists('boats');
         Schema::dropIfExists('squid_types');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['farm_id']);
+            $table->dropColumn('farm_id');
+        });
         Schema::dropIfExists('farms');
         Schema::dropIfExists('users');
     }
