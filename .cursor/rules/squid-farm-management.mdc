@@ -1,0 +1,156 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Quy tắc phát triển ứng dụng quản lý thu chi trại mực
+
+## Tổng quan dự án
+Ứng dụng quản lý thu chi cho trại mực chuyên thu mua mực tại cảng cá và bán sỉ cho khách hàng.
+
+## Cấu trúc công nghệ
+- **Backend**: Laravel (RESTful API) - [backend/](mdc:backend)
+- **Frontend**: Flutter (Mobile) - [frontend/](mdc:frontend)
+- **Database**: MySQL
+
+## Cấu trúc thư mục
+```
+banmuc/
+├── backend/           # Laravel API
+│   ├── app/
+│   │   ├── Models/
+│   │   ├── Http/Controllers/
+│   │   ├── Http/Requests/
+│   │   └── Http/Resources/
+│   ├── database/migrations/
+│   ├── routes/api.php
+│   └── .env
+└── frontend/          # Flutter App
+    ├── lib/
+    │   ├── models/
+    │   ├── services/
+    │   ├── providers/
+    │   ├── screens/
+    │   └── widgets/
+    └── pubspec.yaml
+```
+
+## Models và Entities chính
+
+### 1. User (Người dùng)
+- id, name, email, password, role (admin/staff), created_at, updated_at
+
+### 2. SquidType (Loại mực)
+- id, name, description, created_at, updated_at
+
+### 3. Boat (Ghe/Tàu)
+- id, name, owner_name, phone, description, created_at, updated_at
+
+### 4. Customer (Khách hàng)
+- id, name, phone, address, description, created_at, updated_at
+
+### 5. Purchase (Mua mực)
+- id, boat_id, squid_type_id, weight, unit_price, total_amount, purchase_date, notes, created_at, updated_at
+
+### 6. Sale (Bán sỉ)
+- id, customer_id, squid_type_id, weight, unit_price, total_amount, sale_date, payment_status, notes, created_at, updated_at
+
+### 7. Expense (Chi phí)
+- id, expense_type, amount, expense_date, notes, created_at, updated_at
+
+## API Endpoints cần thiết
+
+### Authentication
+- POST /api/login
+- POST /api/logout
+- GET /api/user
+
+### Squid Types
+- GET /api/squid-types
+- POST /api/squid-types
+- PUT /api/squid-types/{id}
+- DELETE /api/squid-types/{id}
+
+### Boats
+- GET /api/boats
+- POST /api/boats
+- PUT /api/boats/{id}
+- DELETE /api/boats/{id}
+
+### Customers
+- GET /api/customers
+- POST /api/customers
+- PUT /api/customers/{id}
+- DELETE /api/customers/{id}
+
+### Purchases
+- GET /api/purchases
+- POST /api/purchases
+- PUT /api/purchases/{id}
+- DELETE /api/purchases/{id}
+
+### Sales
+- GET /api/sales
+- POST /api/sales
+- PUT /api/sales/{id}
+- DELETE /api/sales/{id}
+
+### Expenses
+- GET /api/expenses
+- POST /api/expenses
+- PUT /api/expenses/{id}
+- DELETE /api/expenses/{id}
+
+### Reports
+- GET /api/reports/revenue
+- GET /api/reports/expenses
+- GET /api/reports/profit
+- GET /api/reports/debts
+
+## Quy tắc phát triển
+
+### Laravel Backend
+1. Sử dụng Resource Controllers
+2. Tạo Form Request cho validation
+3. Sử dụng API Resources cho response formatting
+4. Implement middleware cho authentication
+5. Tạo factories và seeders cho test data
+6. Sử dụng Eloquent relationships
+7. Implement soft deletes cho các model quan trọng
+
+### Flutter Frontend
+1. Sử dụng Provider cho state management
+2. Tạo service classes cho API calls
+3. Implement proper error handling
+4. Sử dụng responsive design
+5. Tạo reusable widgets
+6. Implement form validation
+7. Sử dụng fl_chart cho biểu đồ
+
+### Database Design
+1. Sử dụng foreign keys với constraints
+2. Tạo indexes cho các trường tìm kiếm thường xuyên
+3. Sử dụng timestamps cho audit trail
+4. Implement soft deletes
+
+### Security
+1. Sử dụng Laravel Sanctum cho API authentication
+2. Validate tất cả input data
+3. Implement proper authorization
+4. Sử dụng HTTPS cho production
+
+## Màn hình Flutter cần thiết
+1. **Login Screen** - Đăng nhập
+2. **Dashboard Screen** - Tổng quan
+3. **Purchase Screen** - Quản lý mua mực
+4. **Sale Screen** - Quản lý bán sỉ
+5. **Expense Screen** - Quản lý chi phí
+6. **Report Screen** - Báo cáo tài chính
+7. **Master Data Screens** - Quản lý danh mục
+
+## Naming Conventions
+- Laravel: snake_case cho database, camelCase cho methods
+- Flutter: camelCase cho variables, PascalCase cho classes
+- API endpoints: kebab-case
+- Database tables: plural, snake_case
+- Model names: singular, PascalCase
