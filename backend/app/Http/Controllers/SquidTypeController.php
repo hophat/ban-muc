@@ -119,7 +119,7 @@ class SquidTypeController extends Controller
         // Check if squid type is being used
         if ($squidType->purchases()->exists() || $squidType->sales()->exists()) {
             return response()->json([
-                'message' => 'Không thể xóa loại mực này vì đang được sử dụng trong giao dịch',
+                'message' => 'Không thể xóa loại hàng này vì đang được sử dụng trong giao dịch',
             ], 422);
         }
 

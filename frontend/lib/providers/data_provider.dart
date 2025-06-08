@@ -197,4 +197,58 @@ class DataProvider with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> updatePurchase(
+    int id, {
+    required double weight,
+    required double unitPrice,
+    required double totalAmount,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiService.updatePurchase(
+        id,
+        weight: weight,
+        unitPrice: unitPrice,
+        totalAmount: totalAmount,
+        notes: notes,
+      );
+
+      final updatedPurchase = Purchase.fromJson(response);
+      final index = _purchases.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        _purchases[index] = updatedPurchase;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateSale(
+    int id, {
+    required double weight,
+    required double unitPrice,
+    required double totalAmount,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiService.updateSale(
+        id,
+        weight: weight,
+        unitPrice: unitPrice,
+        totalAmount: totalAmount,
+        notes: notes,
+      );
+
+      final updatedSale = Sale.fromJson(response);
+      final index = _sales.indexWhere((s) => s.id == id);
+      if (index != -1) {
+        _sales[index] = updatedSale;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 } 

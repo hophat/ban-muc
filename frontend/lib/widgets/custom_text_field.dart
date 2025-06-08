@@ -7,11 +7,14 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int? maxLines;
   final bool obscureText;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
+  final IconData? prefixIcon;
+  final IconData? suffixIcon;
   final String? hintText;
   final bool enabled;
   final Function(String)? onChanged;
+  final bool readOnly;
+  final VoidCallback? onSuffixIconPressed;
+  final VoidCallback? onTap;
 
   const CustomTextField({
     Key? key,
@@ -26,6 +29,9 @@ class CustomTextField extends StatelessWidget {
     this.hintText,
     this.enabled = true,
     this.onChanged,
+    this.readOnly = false,
+    this.onSuffixIconPressed,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -38,11 +44,18 @@ class CustomTextField extends StatelessWidget {
       obscureText: obscureText,
       enabled: enabled,
       onChanged: onChanged,
+      readOnly: readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
-        prefixIcon: prefixIcon,
-        suffixIcon: suffixIcon,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        suffixIcon: suffixIcon != null
+            ? IconButton(
+                icon: Icon(suffixIcon),
+                onPressed: onSuffixIconPressed,
+              )
+            : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
         ),

@@ -38,10 +38,10 @@ class DatabaseSeeder extends Seeder
 
         // Create squid types
         $squidTypes = [
-            ['name' => 'Mực ống lớn', 'description' => 'Mực ống kích thước lớn, chất lượng cao'],
-            ['name' => 'Mực ống nhỏ', 'description' => 'Mực ống kích thước nhỏ, phù hợp chế biến'],
-            ['name' => 'Mực nang', 'description' => 'Mực nang tươi ngon'],
-            ['name' => 'Mực khô', 'description' => 'Mực được sấy khô bảo quản'],
+            ['name' => 'hàng ống lớn', 'description' => 'hàng ống kích thước lớn, chất lượng cao'],
+            ['name' => 'hàng ống nhỏ', 'description' => 'hàng ống kích thước nhỏ, phù hợp chế biến'],
+            ['name' => 'hàng nang', 'description' => 'hàng nang tươi ngon'],
+            ['name' => 'hàng khô', 'description' => 'hàng được sấy khô bảo quản'],
         ];
 
         foreach ($squidTypes as $type) {
@@ -107,5 +107,7 @@ class DatabaseSeeder extends Seeder
                 'notes' => 'Chi phí hoạt động hàng ngày',
             ]);
         }
+
+        $this->call(RecentDataSeeder::class);
     }
 }

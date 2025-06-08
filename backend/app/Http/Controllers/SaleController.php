@@ -3,30 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
-use App\Traits\HasFarmAccess;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
-    use HasFarmAccess;
-
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $farmId = $this->getAccessibleFarmId();
-        if (!$farmId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            $sales = Sale::with(['customer', 'squidType'])
+                ->where('farm_id', Auth::user()->farm_id)
+                ->orderBy('sale_date', 'desc')
+                ->get();
+
+            return response()->json($sales);
+        } catch (\Exception $e) {
+            Log::error('Error fetching sales: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi lấy danh sách giao dịch'], 500);
         }
-
-        $sales = Sale::with(['customer', 'squidType'])
-            ->where('farm_id', $farmId)
-            ->orderBy('sale_date', 'desc')
-            ->get();
-
-        return response()->json($sales);
     }
 
     /**
@@ -35,6 +32,7 @@ class SaleController extends Controller
     public function create()
     {
         //
+
     }
 
     /**
@@ -42,47 +40,47 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
-        $farmId = $this->getAccessibleFarmId();
-        if (!$farmId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            $request->validate([
+                'customer_id' => 'required|exists:customers,id',
+                'squid_type_id' => 'required|exists:squid_types,id',
+                'weight' => 'required|numeric|min:0',
+                'unit_price' => 'required|numeric|min:0',
+                'sale_date' => 'required|date',
+                'payment_status' => 'required|in:paid,unpaid,partial',
+                'notes' => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+
+            $sale = Sale::create([
+                'customer_id' => $request->customer_id,
+                'squid_type_id' => $request->squid_type_id,
+                'weight' => $request->weight,
+                'unit_price' => $request->unit_price,
+                'total_amount' => $request->weight * $request->unit_price,
+                'sale_date' => $request->sale_date,
+                'payment_status' => $request->payment_status,
+                'notes' => $request->notes,
+                'farm_id' => Auth::user()->farm_id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Thêm giao dịch bán thành công',
+                'sale' => $sale->load(['customer', 'squidType']),
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating sale: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi thêm giao dịch'], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'customer_id' => 'required|exists:customers,id',
-            'squid_type_id' => 'required|exists:squid_types,id',
-            'weight' => 'required|numeric|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'sale_date' => 'required|date',
-            'payment_status' => 'required|in:paid,unpaid',
-            'notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        // Verify customer belongs to the farm
-        if (!$this->hasAccessToFarm($request->customer->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        // Verify squid type belongs to the farm
-        if (!$this->hasAccessToFarm($request->squidType->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $sale = Sale::create([
-            'farm_id' => $farmId,
-            'customer_id' => $request->customer_id,
-            'squid_type_id' => $request->squid_type_id,
-            'weight' => $request->weight,
-            'unit_price' => $request->unit_price,
-            'sale_date' => $request->sale_date,
-            'payment_status' => $request->payment_status,
-            'notes' => $request->notes,
-        ]);
-
-        return response()->json($sale->load(['customer', 'squidType']), 201);
     }
 
     /**
@@ -110,37 +108,60 @@ class SaleController extends Controller
      */
     public function update(Request $request, Sale $sale)
     {
-        if (!$this->hasAccessToFarm($sale->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            // Kiểm tra quyền truy cập
+            if ($sale->farm_id !== Auth::user()->farm_id) {
+                return response()->json(['message' => 'Không có quyền cập nhật giao dịch này'], 403);
+            }
+
+            $request->validate([
+                'customer_id' => 'sometimes|required|exists:customers,id',
+                'squid_type_id' => 'sometimes|required|exists:squid_types,id',
+                'weight' => 'sometimes|required|numeric|min:0',
+                'unit_price' => 'sometimes|required|numeric|min:0',
+                'sale_date' => 'sometimes|required|date',
+                'payment_status' => 'sometimes|required|in:paid,unpaid,partial',
+                'notes' => 'nullable|string',
+            ]);
+
+            DB::beginTransaction();
+
+            // Cập nhật các trường được cung cấp
+            $updateData = $request->only([
+                'customer_id',
+                'squid_type_id',
+                'weight',
+                'unit_price',
+                'sale_date',
+                'payment_status',
+                'notes',
+            ]);
+
+            // Nếu có cập nhật weight hoặc unit_price, tính lại total_amount
+            if (isset($updateData['weight']) || isset($updateData['unit_price'])) {
+                $weight = $updateData['weight'] ?? $sale->weight;
+                $unitPrice = $updateData['unit_price'] ?? $sale->unit_price;
+                $updateData['total_amount'] = $weight * $unitPrice;
+            }
+
+            $sale->update($updateData);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Cập nhật giao dịch thành công',
+                'sale' => $sale->fresh(['customer', 'squidType']),
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating sale: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi cập nhật giao dịch'], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'customer_id' => 'required|exists:customers,id',
-            'squid_type_id' => 'required|exists:squid_types,id',
-            'weight' => 'required|numeric|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'sale_date' => 'required|date',
-            'payment_status' => 'required|in:paid,unpaid',
-            'notes' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        // Verify customer belongs to the farm
-        if (!$this->hasAccessToFarm($request->customer->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        // Verify squid type belongs to the farm
-        if (!$this->hasAccessToFarm($request->squidType->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $sale->update($request->all());
-
-        return response()->json($sale->load(['customer', 'squidType']));
     }
 
     /**
@@ -148,13 +169,22 @@ class SaleController extends Controller
      */
     public function destroy(Sale $sale)
     {
-        if (!$this->hasAccessToFarm($sale->farm_id)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            // Kiểm tra quyền truy cập
+            if ($sale->farm_id !== Auth::user()->farm_id) {
+                return response()->json(['message' => 'Không có quyền xóa giao dịch này'], 403);
+            }
+
+            DB::beginTransaction();
+            $sale->delete();
+            DB::commit();
+
+            return response()->json(['message' => 'Xóa giao dịch thành công']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting sale: ' . $e->getMessage());
+            return response()->json(['message' => 'Lỗi khi xóa giao dịch'], 500);
         }
-
-        $sale->delete();
-
-        return response()->json(null, 204);
     }
 
     /**

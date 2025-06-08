@@ -69,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Cập nhật các controller
       _nameController.text = _user.name;
       _emailController.text = _user.email ?? '';
-      _phoneController.text = _user.phone;
+      _phoneController.text = _user.phone ?? '';
       _farmNameController.text = _farm.name;
       _farmAddressController.text = _farm.address;
       _farmPhoneController.text = _farm.phone;

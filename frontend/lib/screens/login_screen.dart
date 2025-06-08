@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 // Title
                 Text(
-                  'QUẢN LÝ TRẠI MỰC',
+                  'QUẢN LÝ TRẠI hàng',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: 8),
                 
                 Text(
-                  'Hệ thống quản lý trang trại nuôi mực chuyên nghiệp',
+                  'Hệ thống quản lý trang trại nuôi hàng chuyên nghiệp',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Color(0xFF757575),
                   ),

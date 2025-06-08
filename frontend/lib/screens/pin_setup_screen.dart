@@ -263,7 +263,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                 
                 // Farm information section
                 Text(
-                  'Thông tin trại mực',
+                  'Thông tin trại hàng',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -278,7 +278,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                   controller: _farmNameController,
                   decoration: InputDecoration(
                     labelText: 'Tên trại',
-                    hintText: 'Nhập tên trại mực của bạn',
+                    hintText: 'Nhập tên trại hàng của bạn',
                     prefixIcon: Icon(Icons.business),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -299,7 +299,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                   controller: _farmAddressController,
                   decoration: InputDecoration(
                     labelText: 'Địa chỉ trại',
-                    hintText: 'Nhập địa chỉ trại mực',
+                    hintText: 'Nhập địa chỉ trại hàng',
                     prefixIcon: Icon(Icons.location_on_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -346,7 +346,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: 'Mô tả trại (không bắt buộc)',
-                    hintText: 'Nhập mô tả về trại mực của bạn',
+                    hintText: 'Nhập mô tả về trại hàng của bạn',
                     prefixIcon: Icon(Icons.description_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),

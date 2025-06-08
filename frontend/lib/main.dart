@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/data_provider.dart';
@@ -58,15 +59,14 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quản Lý Trại Mực',
+      title: 'Quản Lý vựa',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Business color scheme - xanh navy chủ đạo
         primarySwatch: Colors.blue,
         primaryColor: Color(0xFF1565C0), // Navy blue
         scaffoldBackgroundColor: Color(0xFFF5F5F5), // Light gray
@@ -171,6 +171,15 @@ class MyApp extends StatelessWidget {
           error: Color(0xFFD32F2F),
         ),
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('vi', 'VN'),
+      ],
+      locale: const Locale('vi', 'VN'),
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return authProvider.isAuthenticated 

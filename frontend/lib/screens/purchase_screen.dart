@@ -4,6 +4,8 @@ import '../models/purchase.dart';
 import '../providers/data_provider.dart';
 import '../services/api_service.dart';
 import '../utils/formatters.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({Key? key}) : super(key: key);
@@ -161,7 +163,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text('Quản Lý Mua Mực'),
+        title: Text('Quản Lý Mua hàng'),
         backgroundColor: Color(0xFF1565C0),
         foregroundColor: Colors.white,
         elevation: 2,
@@ -280,7 +282,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
             controller: _searchController,
             style: TextStyle(fontSize: 16),
             decoration: InputDecoration(
-              hintText: 'Tìm kiếm theo tên ghe, loại mực...',
+              hintText: 'Tìm kiếm theo tên ghe, loại hàng...',
               hintStyle: TextStyle(fontSize: 14),
               prefixIcon: Icon(Icons.search, color: Color(0xFF757575)),
               suffixIcon: _searchQuery.isNotEmpty
@@ -370,7 +372,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
           
           // Dropdown filters
           Text(
-            'Lọc theo ghe/tàu và loại mực:',
+            'Lọc theo ghe/tàu và loại hàng:',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w500,
             ),
@@ -410,7 +412,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                 child: DropdownButtonFormField<int>(
                   value: _selectedSquidTypeId,
                   decoration: InputDecoration(
-                    hintText: 'Tất cả loại mực',
+                    hintText: 'Tất cả loại hàng',
                     hintStyle: TextStyle(fontSize: 14),
                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   ),
@@ -418,7 +420,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                   items: [
                     DropdownMenuItem<int>(
                       value: null,
-                      child: Text('Tất cả loại mực', style: TextStyle(fontSize: 16)),
+                      child: Text('Tất cả loại hàng', style: TextStyle(fontSize: 16)),
                     ),
                     ...dataProvider.squidTypes.map((type) => DropdownMenuItem<int>(
                       value: type.id,
@@ -525,7 +527,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
             Text(
               hasFilters
                   ? 'Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác'
-                  : 'Nhấn nút "+" để thêm giao dịch mua mực đầu tiên',
+                  : 'Nhấn nút "+" để thêm giao dịch mua hàng đầu tiên',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade500,
@@ -756,7 +758,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                         Icon(Icons.attach_money, size: 14, color: Color(0xFFFF8F00)),
                         SizedBox(width: 6),
                         Text(
-                          '${Formatters.formatCurrency(purchase.unitPrice)}/kg',
+                          '${_formatCurrency(purchase.unitPrice)}/kg',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -780,7 +782,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                           Icon(Icons.payments, size: 16, color: Color(0xFF1565C0)),
                           SizedBox(width: 6),
                           Text(
-                            Formatters.formatCurrency(purchase.totalAmount),
+                            _formatCurrency(purchase.totalAmount),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -857,11 +859,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDetailRow('Ghe/Tàu:', purchase.boat?.name ?? 'N/A'),
-              _buildDetailRow('Loại mực:', purchase.squidType?.name ?? 'N/A'),
+              _buildDetailRow('loại hàng:', purchase.squidType?.name ?? 'N/A'),
               _buildDetailRow('Ngày mua:', Formatters.formatDate(purchase.purchaseDate)),
               _buildDetailRow('Khối lượng:', Formatters.formatWeight(purchase.weight)),
-              _buildDetailRow('Đơn giá:', '${Formatters.formatCurrency(purchase.unitPrice)}/kg'),
-              _buildDetailRow('Tổng tiền:', Formatters.formatCurrency(purchase.totalAmount)),
+              _buildDetailRow('Đơn giá:', '${_formatCurrency(purchase.unitPrice)}/kg'),
+              _buildDetailRow('Tổng tiền:', _formatCurrency(purchase.totalAmount)),
               if (purchase.notes != null && purchase.notes!.isNotEmpty)
                 _buildDetailRow('Ghi chú:', purchase.notes!),
             ],
@@ -1021,7 +1023,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
     if (dataProvider.boats.isEmpty || dataProvider.squidTypes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Đang tải dữ liệu ghe/tàu và loại mực...'),
+          content: Text('Đang tải dữ liệu ghe/tàu và loại hàng...'),
           backgroundColor: Colors.blue,
         ),
       );
@@ -1044,7 +1046,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
       context,
       MaterialPageRoute(
         builder: (context) => PurchaseFormScreen(
-          title: 'Thêm giao dịch mua mực',
+          title: 'Thêm giao dịch mua hàng',
           onSaved: _loadPurchases,
         ),
       ),
@@ -1056,7 +1058,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
       context,
       MaterialPageRoute(
         builder: (context) => PurchaseFormScreen(
-          title: 'Sửa giao dịch mua mực',
+          title: 'Sửa giao dịch mua hàng',
           purchase: purchase,
           onSaved: _loadPurchases,
         ),
@@ -1080,11 +1082,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
             Text(
-              'Loại mực: ${purchase.squidType?.name}',
+              'loại hàng: ${purchase.squidType?.name}',
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
             Text(
-              'Tổng tiền: ${Formatters.formatCurrency(purchase.totalAmount)}',
+              'Tổng tiền: ${_formatCurrency(purchase.totalAmount)}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.red.shade600,
@@ -1197,7 +1199,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
               Expanded(
                 child: _buildStatItem(
                   'TỔNG TIỀN',
-                  Formatters.formatCurrency(totalAmount),
+                  _formatCurrency(totalAmount),
                   Icons.payments,
                   Color(0xFF1565C0),
                 ),
@@ -1215,7 +1217,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
               Expanded(
                 child: _buildStatItem(
                   'GIÁ TRUNG BÌNH',
-                  '${Formatters.formatCurrency(avgPrice)}/kg',
+                  '${_formatCurrency(avgPrice)}/kg',
                   Icons.trending_up,
                   Color(0xFFFF8F00),
                 ),
@@ -1292,7 +1294,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Xuất ${_filteredPurchases.length} giao dịch mua mực ra file Excel?'),
+            Text('Xuất ${_filteredPurchases.length} giao dịch mua hàng ra file Excel?'),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -1441,9 +1443,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                     const Text('Tổng quan', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Text('Số giao dịch: ${_filteredPurchases.length}'),
-                    Text('Tổng tiền: ${Formatters.formatCurrency(totalAmount)}'),
+                    Text('Tổng tiền: ${_formatCurrency(totalAmount)}'),
                     Text('Tổng khối lượng: ${Formatters.formatWeight(totalWeight)}'),
-                    Text('Giá trung bình: ${Formatters.formatCurrency(avgPrice)}/kg'),
+                    Text('Giá trung bình: ${_formatCurrency(avgPrice)}/kg'),
                   ],
                 ),
               ),
@@ -1457,7 +1459,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
                       const TabBar(
                         tabs: [
                           Tab(text: 'Theo ghe/tàu'),
-                          Tab(text: 'Theo loại mực'),
+                          Tab(text: 'Theo loại hàng'),
                         ],
                       ),
                       Expanded(
@@ -1493,7 +1495,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${data['count']} giao dịch'),
-                Text('${Formatters.formatCurrency(data['amount'])}'),
+                Text(_formatCurrency(data['amount'])),
                 Text('${Formatters.formatWeight(data['weight'])}'),
               ],
             ),
@@ -1501,6 +1503,16 @@ class _PurchaseScreenState extends State<PurchaseScreen> with TickerProviderStat
         );
       }).toList(),
     );
+  }
+
+  // Hàm format tiền tệ dùng chung
+  String _formatCurrency(double value) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(value).replaceAll('.', ',');
   }
 }
 
@@ -1661,7 +1673,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
 
                       // Squid type dropdown with quick add
               Text(
-                'LOẠI MỰC *',
+                'LOẠI Hàng *',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -1677,7 +1689,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                       value: _selectedSquidTypeId,
                       style: TextStyle(fontSize: 18, color: Color(0xFF424242)),
                       decoration: InputDecoration(
-                        hintText: 'Chọn loại mực',
+                        hintText: 'Chọn loại hàng',
                         hintStyle: TextStyle(fontSize: 16),
                         prefixIcon: Icon(Icons.water_drop, size: 28, color: Color(0xFF2E7D32)),
                         contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -1707,7 +1719,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                       },
                       validator: (value) {
                         if (value == null) {
-                          return 'Vui lòng chọn loại mực';
+                          return 'Vui lòng chọn loại hàng';
                         }
                         return null;
                       },
@@ -1843,47 +1855,35 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
               // Total amount display
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF1565C0).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+                  color: Color(0xFF1565C0).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Color(0xFF1565C0).withOpacity(0.3)),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.payments, color: Colors.white, size: 36),
-                        SizedBox(width: 16),
+                        Icon(Icons.payments, color: Color(0xFF1565C0), size: 24),
+                        SizedBox(width: 8),
                         Text(
-                          'TỔNG TIỀN THANH TOÁN',
+                          'Tổng tiền:',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: Color(0xFF1565C0),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
                     Text(
                       _calculateTotal(),
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
+                        color: Color(0xFF1565C0),
                       ),
                     ),
                   ],
@@ -2036,15 +2036,43 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
     final weight = double.tryParse(_weightController.text) ?? 0;
     final unitPrice = double.tryParse(_unitPriceController.text) ?? 0;
     final total = weight * unitPrice;
-    return Formatters.formatCurrency(total);
+    // Format số tiền với dấu phẩy ngăn cách hàng nghìn
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+      decimalDigits: 0,
+    );
+    return formatter.format(total).replaceAll('.', ',');
   }
 
   Future<void> _selectDate() async {
+    // Khởi tạo định dạng ngày tháng tiếng Việt
+    await initializeDateFormatting('vi_VN', null);
+    
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      locale: const Locale('vi', 'VN'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Color(0xFF1565C0),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF424242),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: Color(0xFF1565C0),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (date != null) {
       setState(() {
@@ -2282,7 +2310,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
               ),
               SizedBox(width: 12),
               Text(
-                'Thêm Loại Mực Nhanh',
+                'Thêm loại hàng Nhanh',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -2300,7 +2328,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TÊN LOẠI MỰC *',
+                    'TÊN loại hàng *',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -2312,7 +2340,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                     controller: nameController,
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: 'VD: Mực ống, Mực nang, Mực lá...',
+                      hintText: 'VD: hàng ống, hàng nang, hàng lá...',
                       hintStyle: TextStyle(fontSize: 14),
                       prefixIcon: Icon(Icons.water_drop, size: 24, color: Color(0xFF1565C0)),
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -2331,7 +2359,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Vui lòng nhập tên loại mực';
+                        return 'Vui lòng nhập tên loại hàng';
                       }
                       return null;
                     },
@@ -2351,7 +2379,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                     maxLines: 3,
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: 'Nhập mô tả về loại mực này (tùy chọn)',
+                      hintText: 'Nhập mô tả về loại hàng này (tùy chọn)',
                       hintStyle: TextStyle(fontSize: 14),
                       prefixIcon: Padding(
                         padding: EdgeInsets.only(bottom: 40),
@@ -2422,7 +2450,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                           children: [
                             Icon(Icons.check_circle, color: Colors.white),
                             SizedBox(width: 8),
-                            Text('Thêm loại mực "${nameController.text.trim()}" thành công'),
+                            Text('Thêm loại hàng "${nameController.text.trim()}" thành công'),
                           ],
                         ),
                         backgroundColor: Color(0xFF1565C0),
@@ -2432,7 +2460,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Lỗi thêm loại mực: $e'),
+                        content: Text('Lỗi thêm loại hàng: $e'),
                         backgroundColor: Colors.red,
                       ),
                     );

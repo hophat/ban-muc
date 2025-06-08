@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
     static const String baseUrl = 'http://localhost:8000/api';
+    // static const String baseUrl = 'https://banmuc.gulagi.com/api';
   
   String? _token;
 
@@ -26,7 +27,11 @@ class ApiService {
   Future<void> clearToken() async {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
+    // Xóa tất cả các key liên quan đến auth
     await prefs.remove('auth_token');
+    await prefs.remove('user_data');
+    await prefs.remove('farm_data');
+    await prefs.clear(); // Xóa tất cả dữ liệu trong SharedPreferences
   }
 
   // Get headers with authorization
@@ -120,11 +125,18 @@ class ApiService {
 
   Future<void> logout() async {
     try {
-      await http.post(
-        Uri.parse('$baseUrl/logout'),
-        headers: await _getHeaders(),
-      );
+      // Gọi API logout trước khi xóa token
+      final token = await getToken();
+      if (token != null) {
+        await http.post(
+          Uri.parse('$baseUrl/logout'),
+          headers: await _getHeaders(),
+        );
+      }
+    } catch (e) {
+      print('Logout error: $e');
     } finally {
+      // Luôn xóa token ngay cả khi API call thất bại
       await clearToken();
     }
   }
@@ -293,5 +305,55 @@ class ApiService {
       body: json.encode({'name': name, 'address': address, 'phone': phone, 'description': description}),
     );
     return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> updatePurchase(
+    int id, {
+    required double weight,
+    required double unitPrice,
+    required double totalAmount,
+    String? notes,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/purchases/$id'),
+        headers: await _getHeaders(),
+        body: json.encode({
+          'weight': weight,
+          'unit_price': unitPrice,
+          'total_amount': totalAmount,
+          if (notes != null) 'notes': notes,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      print('Update purchase error: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> updateSale(
+    int id, {
+    required double weight,
+    required double unitPrice,
+    required double totalAmount,
+    String? notes,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/sales/$id'),
+        headers: await _getHeaders(),
+        body: json.encode({
+          'weight': weight,
+          'unit_price': unitPrice,
+          'total_amount': totalAmount,
+          if (notes != null) 'notes': notes,
+        }),
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      print('Update sale error: $e');
+      rethrow;
+    }
   }
 } 

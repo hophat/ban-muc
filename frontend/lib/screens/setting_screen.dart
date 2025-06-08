@@ -18,16 +18,17 @@ class SettingScreen extends StatefulWidget {
 
 class _SettingScreenState extends State<SettingScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _isLoading = false;
   final ApiService _apiService = ApiService();
-  final _searchController = TextEditingController();
-  String _searchQuery = '';
   bool _isFirstLoad = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _loadData();
   }
 
   @override
@@ -55,7 +56,7 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
       );
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
       }
     }
   }
@@ -70,15 +71,43 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Cài đặt'),
+        title: const Text('Cài đặt hệ thống'),
+        backgroundColor: Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+        elevation: 2,
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Loại mực'),
-            Tab(text: 'Khách hàng'),
-            Tab(text: 'Thuyền'),
-            Tab(text: 'Cài đặt khác'),
+          isScrollable: true,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          labelStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.normal,
+          ),
+          tabs: [
+            Tab(
+              icon: const Icon(Icons.category_outlined),
+              text: 'Loại hàng',
+              iconMargin: const EdgeInsets.only(bottom: 8),
+            ),
+            Tab(
+              icon: const Icon(Icons.people_outline),
+              text: 'Khách hàng',
+              iconMargin: const EdgeInsets.only(bottom: 8),
+            ),
+            Tab(
+              icon: const Icon(Icons.directions_boat_outlined),
+              text: 'Thuyền',
+              iconMargin: const EdgeInsets.only(bottom: 8),
+            ),
           ],
         ),
       ),
@@ -90,63 +119,153 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
                 _buildSquidTypesTab(),
                 _buildCustomersTab(),
                 _buildBoatsTab(),
-                _buildOtherSettingsTab(),
               ],
             ),
     );
   }
 
-  Widget _buildSquidTypesTab() {
-    final dataProvider = Provider.of<DataProvider>(context);
+  Widget _buildTabContent({
+    required String searchLabel,
+    required List<Widget> children,
+    required VoidCallback onAddPressed,
+    required String emptyMessage,
+  }) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
           child: Row(
             children: [
               Expanded(
-                child: CustomTextField(
-                  controller: TextEditingController(),
-                  label: 'Tìm kiếm loại mực...',
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: searchLabel,
+                    prefixIcon: Icon(Icons.search, color: Color(0xFF1565C0)),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: Color(0xFF757575)),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Color(0xFF1565C0), width: 2),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                   onChanged: (value) {
-                    // TODO: Implement search
+                    setState(() => _searchQuery = value);
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              CustomButton(
-                text: 'Thêm mới',
-                onPressed: () => _showSquidTypeDialog(),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: onAddPressed,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Thêm mới'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF1565C0),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: dataProvider.squidTypes.length,
-            itemBuilder: (context, index) {
-              final squidType = dataProvider.squidTypes[index];
-              return ListTile(
-                title: Text(squidType.name),
-                subtitle: Text(squidType.description ?? ''),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+          child: children.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showSquidTypeDialog(squidType: squidType),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteSquidType(squidType),
-                    ),
-                  ],
+                      Icon(
+                        Icons.search_off,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        emptyMessage,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: ListView(
+                      padding: const EdgeInsets.all(8),
+                      children: children,
                 ),
-              );
-            },
+                  ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSquidTypesTab() {
+    final dataProvider = Provider.of<DataProvider>(context);
+    final filteredSquidTypes = dataProvider.squidTypes.where((type) {
+      return type.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          (type.description ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
+    return _buildTabContent(
+      searchLabel: 'Tìm kiếm loại hàng...',
+      onAddPressed: () => _showSquidTypeDialog(),
+      emptyMessage: _searchQuery.isNotEmpty
+          ? 'Không tìm thấy loại hàng phù hợp'
+          : 'Chưa có loại hàng nào. Nhấn "Thêm mới" để tạo.',
+      children: filteredSquidTypes.map((type) => _buildSquidTypeItem(type)).toList(),
     );
   }
 
@@ -157,55 +276,13 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
           (customer.phone ?? '').contains(_searchQuery);
     }).toList();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  controller: _searchController,
-                  label: 'Tìm kiếm khách hàng...',
-                  onChanged: (value) {
-                    setState(() => _searchQuery = value);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              CustomButton(
-                text: 'Thêm mới',
-                onPressed: () => _showCustomerDialog(),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filteredCustomers.length,
-            itemBuilder: (context, index) {
-              final customer = filteredCustomers[index];
-              return ListTile(
-                title: Text(customer.name),
-                subtitle: Text(customer.phone ?? ''),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showCustomerDialog(customer: customer),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteCustomer(customer),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+    return _buildTabContent(
+      searchLabel: 'Tìm kiếm khách hàng...',
+      onAddPressed: () => _showCustomerDialog(),
+      emptyMessage: _searchQuery.isNotEmpty
+          ? 'Không tìm thấy khách hàng phù hợp'
+          : 'Chưa có khách hàng nào. Nhấn "Thêm mới" để tạo.',
+      children: filteredCustomers.map((customer) => _buildCustomerItem(customer)).toList(),
     );
   }
 
@@ -216,66 +293,273 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
           (boat.ownerName ?? '').contains(_searchQuery);
     }).toList();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  controller: _searchController,
-                  label: 'Tìm kiếm thuyền...',
-                  onChanged: (value) {
-                    setState(() => _searchQuery = value);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              CustomButton(
-                text: 'Thêm mới',
-                onPressed: () => _showBoatDialog(),
-              ),
-            ],
+    return _buildTabContent(
+      searchLabel: 'Tìm kiếm thuyền...',
+      onAddPressed: () => _showBoatDialog(),
+      emptyMessage: _searchQuery.isNotEmpty
+          ? 'Không tìm thấy thuyền phù hợp'
+          : 'Chưa có thuyền nào. Nhấn "Thêm mới" để tạo.',
+      children: filteredBoats.map((boat) => _buildBoatItem(boat)).toList(),
+    );
+  }
+
+  Widget _buildSquidTypeItem(SquidType type) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          child: Icon(
+            Icons.category,
+            color: Theme.of(context).primaryColor,
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filteredBoats.length,
-            itemBuilder: (context, index) {
-              final boat = filteredBoats[index];
-              return ListTile(
-                title: Text(boat.name),
-                subtitle: Text('Tên chủ thuyền: ${boat.ownerName ?? 'N/A'}'),
+        title: Text(
+          type.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: type.description != null
+            ? Text(
+                type.description!,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              )
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+      children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              color: Colors.blue,
+              onPressed: () => _showSquidTypeDialog(squidType: type),  
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              color: Colors.red,
+              onPressed: () => _deleteSquidType(type),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerItem(Customer customer) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          child: Icon(
+            Icons.person,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        title: Text(
+          customer.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            if (customer.phone != null)
+              Text(
+                customer.phone!,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            if (customer.address != null)
+              Text(
+                customer.address!,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+          ],
+        ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showBoatDialog(boat: boat),
+              icon: const Icon(Icons.edit_outlined),
+              color: Colors.blue,
+                      onPressed: () => _showCustomerDialog(customer: customer),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteBoat(boat),
+              icon: const Icon(Icons.delete_outline),
+              color: Colors.red,
+                      onPressed: () => _deleteCustomer(customer),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildOtherSettingsTab() {
-    return const Center(
-      child: Text('Cài đặt khác sẽ được phát triển sau'),
+  Widget _buildBoatItem(Boat boat) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          child: Icon(
+            Icons.directions_boat,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        title: Text(
+          boat.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (boat.ownerName != null)
+              Text(
+                'Chủ thuyền: ${boat.ownerName}',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            if (boat.phone != null)
+              Text(
+                'SĐT: ${boat.phone}',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              color: Colors.blue,
+              onPressed: () => _showBoatDialog(boat: boat),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              color: Colors.red,
+              onPressed: () => _deleteBoat(boat),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> _showSquidTypeDialog({SquidType? squidType}) async {
-    // TODO: Implement squid type dialog
+    final nameController = TextEditingController(text: squidType?.name ?? '');
+    final descriptionController = TextEditingController(text: squidType?.description ?? '');
+
+    if (!mounted) return;
+
+    return showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(squidType == null ? 'Thêm loại hàng mới' : 'Sửa thông tin loại hàng'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomTextField(
+                controller: nameController,
+                label: 'Tên loại hàng',
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập tên loại hàng';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              CustomTextField(
+                controller: descriptionController,
+                label: 'Mô tả',
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vui lòng nhập tên loại hàng')),
+                );
+                return;
+              }
+
+              try {
+                final data = {
+                  'name': nameController.text,
+                  'description': descriptionController.text,
+                };
+
+                if (squidType == null) {
+                  await _apiService.create('squid-types', data);
+                } else {
+                  await _apiService.update('squid-types', squidType.id, data);
+                }
+
+                if (!mounted) return;
+                Navigator.pop(dialogContext);
+                await _loadData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(squidType == null ? 'Thêm loại hàng thành công' : 'Cập nhật thành công')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Lỗi: ${e.toString()}')),
+                );
+              }
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showCustomerDialog({Customer? customer}) async {
@@ -434,7 +718,41 @@ class _SettingScreenState extends State<SettingScreen> with SingleTickerProvider
   }
 
   Future<void> _deleteSquidType(SquidType squidType) async {
-    // TODO: Implement delete squid type
+    if (!mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text('Bạn có chắc chắn muốn xóa loại hàng "${squidType.name}"?\nLưu ý: Việc xóa loại hàng có thể ảnh hưởng đến các giao dịch liên quan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await _apiService.delete('squid-types', squidType.id);
+        await _loadData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Xóa loại hàng thành công')),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi xóa: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Future<void> _deleteCustomer(Customer customer) async {

@@ -46,9 +46,9 @@ trait HasFarmAccess
             return false;
         }
 
-        if ($user->role === 'admin') {
-            return $user->ownedFarm?->id === $farmId;
-        }
+        // if ($user->role === 'admin') {
+        //     return $user->ownedFarm?->id === $farmId;
+        // }
 
         return $user->farm_id === $farmId;
     }

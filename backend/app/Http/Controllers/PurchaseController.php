@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Purchase;
+use App\Models\Boat;
+use App\Models\SquidType;
 use App\Traits\HasFarmAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -17,10 +19,10 @@ class PurchaseController extends Controller
     public function index()
     {
         $farmId = $this->getAccessibleFarmId();
+
         if (!$farmId) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
         $purchases = Purchase::with(['boat', 'squidType'])
             ->where('farm_id', $farmId)
             ->orderBy('purchase_date', 'desc')
@@ -34,7 +36,18 @@ class PurchaseController extends Controller
      */
     public function create()
     {
-        //
+        $farmId = $this->getAccessibleFarmId();
+        if (!$farmId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $boats = Boat::where('farm_id', $farmId)->get();
+        $squidTypes = SquidType::where('farm_id', $farmId)->get();
+
+        return response()->json([
+            'boats' => $boats,
+            'squid_types' => $squidTypes,
+        ]);
     }
 
     /**
@@ -46,7 +59,6 @@ class PurchaseController extends Controller
         if (!$farmId) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
         $validator = Validator::make($request->all(), [
             'boat_id' => 'required|exists:boats,id',
             'squid_type_id' => 'required|exists:squid_types,id',
@@ -60,13 +72,17 @@ class PurchaseController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Load boat and squid type models
+        $boat = Boat::findOrFail($request->boat_id);
+        $squidType = SquidType::findOrFail($request->squid_type_id);
+
         // Verify boat belongs to the farm
-        if (!$this->hasAccessToFarm($request->boat->farm_id)) {
+        if (!$this->hasAccessToFarm($boat->farm_id)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         // Verify squid type belongs to the farm
-        if (!$this->hasAccessToFarm($request->squidType->farm_id)) {
+        if (!$this->hasAccessToFarm($squidType->farm_id)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -100,7 +116,24 @@ class PurchaseController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $farmId = $this->getAccessibleFarmId();
+        if (!$farmId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $purchase = Purchase::with(['boat', 'squidType'])
+                ->where('farm_id', $farmId)
+                ->findOrFail($id);
+
+            if (!$purchase) {
+                return response()->json(['message' => 'Không tìm thấy giao dịch mua'], 404);
+            }
+
+            return response()->json($purchase);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Không tìm thấy giao dịch mua'], 404);
+        }
     }
 
     /**
@@ -125,13 +158,17 @@ class PurchaseController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Load boat and squid type models
+        $boat = \App\Models\Boat::findOrFail($request->boat_id);
+        $squidType = \App\Models\SquidType::findOrFail($request->squid_type_id);
+
         // Verify boat belongs to the farm
-        if (!$this->hasAccessToFarm($request->boat->farm_id)) {
+        if (!$this->hasAccessToFarm($boat->farm_id)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         // Verify squid type belongs to the farm
-        if (!$this->hasAccessToFarm($request->squidType->farm_id)) {
+        if (!$this->hasAccessToFarm($squidType->farm_id)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

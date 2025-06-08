@@ -43,7 +43,7 @@ class _SquidTypesManagementScreenState extends State<SquidTypesManagementScreen>
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi tải danh sách loại mực: $e')),
+        SnackBar(content: Text('Lỗi khi tải danh sách loại hàng: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -93,7 +93,7 @@ class _SquidTypesManagementScreenState extends State<SquidTypesManagementScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: const Text('Bạn có chắc chắn muốn xóa loại mực này?'),
+        content: const Text('Bạn có chắc chắn muốn xóa loại hàng này?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -138,7 +138,7 @@ class _SquidTypesManagementScreenState extends State<SquidTypesManagementScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quản lý loại mực'),
+        title: const Text('Quản lý loại hàng'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -156,18 +156,18 @@ class _SquidTypesManagementScreenState extends State<SquidTypesManagementScreen>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              _isEditing ? 'Chỉnh sửa loại mực' : 'Thêm loại mực mới',
+                              _isEditing ? 'Chỉnh sửa loại hàng' : 'Thêm loại hàng mới',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _nameController,
                               decoration: const InputDecoration(
-                                labelText: 'Tên loại mực',
+                                labelText: 'Tên loại hàng',
                                 border: OutlineInputBorder(),
                               ),
                               validator: (value) =>
-                                  value?.isEmpty ?? true ? 'Vui lòng nhập tên loại mực' : null,
+                                  value?.isEmpty ?? true ? 'Vui lòng nhập tên loại hàng' : null,
                             ),
                             const SizedBox(height: 8),
                             TextFormField(

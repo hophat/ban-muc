@@ -3,10 +3,10 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Quy tắc phát triển ứng dụng quản lý thu chi trại mực
+# Quy tắc phát triển ứng dụng quản lý thu chi trại hàng
 
 ## Tổng quan dự án
-Ứng dụng quản lý thu chi cho trại mực chuyên thu mua mực tại cảng cá và bán sỉ cho khách hàng.
+Ứng dụng quản lý thu chi cho trại hàng chuyên thu mua hàng tại cảng cá và bán sỉ cho khách hàng.
 
 ## Cấu trúc công nghệ
 - **Backend**: Laravel (RESTful API) - [backend/](mdc:backend)
@@ -40,7 +40,7 @@ banmuc/
 ### 1. User (Người dùng)
 - id, name, email, password, role (admin/staff), created_at, updated_at
 
-### 2. SquidType (Loại mực)
+### 2. SquidType (loại hàng)
 - id, name, description, created_at, updated_at
 
 ### 3. Boat (Ghe/Tàu)
@@ -49,7 +49,7 @@ banmuc/
 ### 4. Customer (Khách hàng)
 - id, name, phone, address, description, created_at, updated_at
 
-### 5. Purchase (Mua mực)
+### 5. Purchase (Mua hàng)
 - id, boat_id, squid_type_id, weight, unit_price, total_amount, purchase_date, notes, created_at, updated_at
 
 ### 6. Sale (Bán sỉ)
@@ -142,7 +142,7 @@ banmuc/
 ## Màn hình Flutter cần thiết
 1. **Login Screen** - Đăng nhập
 2. **Dashboard Screen** - Tổng quan
-3. **Purchase Screen** - Quản lý mua mực
+3. **Purchase Screen** - Quản lý mua hàng
 4. **Sale Screen** - Quản lý bán sỉ
 5. **Expense Screen** - Quản lý chi phí
 6. **Report Screen** - Báo cáo tài chính

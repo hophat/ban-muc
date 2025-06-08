@@ -164,7 +164,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text('Quản Lý Bán Mực'),
+        title: Text('Quản Lý Bán hàng'),
         backgroundColor: Color(0xFF2E7D32),
         foregroundColor: Colors.white,
         elevation: 2,
@@ -282,7 +282,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
             controller: _searchController,
             style: TextStyle(fontSize: 16),
             decoration: InputDecoration(
-              hintText: 'Tìm kiếm theo tên khách hàng, loại mực...',
+              hintText: 'Tìm kiếm theo tên khách hàng, loại hàng...',
               hintStyle: TextStyle(fontSize: 14),
               prefixIcon: Icon(Icons.search, color: Color(0xFF757575)),
               suffixIcon: _searchQuery.isNotEmpty
@@ -402,7 +402,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  'THỐNG KÊ BÁN MỰC',
+                  'THỐNG KÊ BÁN hàng',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF2E7D32),
@@ -542,7 +542,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
             Text(
               hasFilters
                   ? 'Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác'
-                  : 'Nhấn nút "+" để thêm giao dịch bán mực đầu tiên',
+                  : 'Nhấn nút "+" để thêm giao dịch bán hàng đầu tiên',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade500,
@@ -838,6 +838,24 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
             Icon(Icons.info_outline, color: Color(0xFF2E7D32)),
             SizedBox(width: 8),
             Text('Chi tiết giao dịch'),
+            Spacer(),
+            IconButton(
+              icon: Icon(Icons.edit, color: Color(0xFF2E7D32)),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SaleFormScreen(
+                      title: 'Chỉnh sửa giao dịch',
+                      sale: sale,
+                      onSaved: _loadSales,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'Chỉnh sửa thông tin',
+            ),
           ],
         ),
         content: SizedBox(
@@ -847,7 +865,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDetailRow('Khách hàng:', sale.customer?.name ?? 'N/A'),
-              _buildDetailRow('Loại mực:', sale.squidType?.name ?? 'N/A'),
+              _buildDetailRow('loại hàng:', sale.squidType?.name ?? 'N/A'),
               _buildDetailRow('Ngày bán:', Formatters.formatDate(sale.saleDate)),
               _buildDetailRow('Khối lượng:', Formatters.formatWeight(sale.weight)),
               _buildDetailRow('Đơn giá:', '${Formatters.formatCurrency(sale.unitPrice)}/kg'),
@@ -855,6 +873,51 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
               _buildDetailRow('Thanh toán:', Formatters.getPaymentStatusText(sale.paymentStatus)),
               if (sale.notes != null && sale.notes!.isNotEmpty)
                 _buildDetailRow('Ghi chú:', sale.notes!),
+              SizedBox(height: 16),
+              Divider(),
+              SizedBox(height: 8),
+              Text(
+                'CẬP NHẬT THANH TOÁN',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildPaymentStatusButton(
+                      sale,
+                      'paid',
+                      'Đã thanh toán',
+                      Icons.check_circle,
+                      Color(0xFF2E7D32),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildPaymentStatusButton(
+                      sale,
+                      'unpaid',
+                      'Chưa thanh toán',
+                      Icons.pending,
+                      Color(0xFFD32F2F),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _buildPaymentStatusButton(
+                      sale,
+                      'partial',
+                      'Thanh toán một phần',
+                      Icons.schedule,
+                      Color(0xFFFF8F00),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -866,6 +929,84 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  Widget _buildPaymentStatusButton(
+    Sale sale,
+    String status,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
+    final isSelected = sale.paymentStatus == status;
+    return ElevatedButton(
+      onPressed: isSelected ? null : () => _updatePaymentStatus(sale, status),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? color.withOpacity(0.2) : Colors.white,
+        foregroundColor: isSelected ? color : Colors.grey.shade700,
+        elevation: isSelected ? 0 : 1,
+        padding: EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: isSelected ? color : Colors.grey.shade600),
+          SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updatePaymentStatus(Sale sale, String newStatus) async {
+    try {
+      final apiService = ApiService();
+      await apiService.update('sales', sale.id, {
+        'payment_status': newStatus,
+      });
+
+      // Reload sales data
+      await _loadSales();
+
+      // Close dialog
+      Navigator.pop(context);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Cập nhật trạng thái thanh toán thành công'),
+            ],
+          ),
+          backgroundColor: Color(0xFF2E7D32),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi cập nhật trạng thái thanh toán: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -943,7 +1084,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
     if (dataProvider.customers.isEmpty || dataProvider.squidTypes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Đang tải dữ liệu khách hàng và loại mực...'),
+          content: Text('Đang tải dữ liệu khách hàng và loại hàng...'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -966,7 +1107,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
       context,
       MaterialPageRoute(
         builder: (context) => SaleFormScreen(
-          title: 'Thêm giao dịch bán mực',
+          title: 'Thêm giao dịch bán hàng',
           onSaved: _loadSales,
         ),
       ),
@@ -998,7 +1139,7 @@ class _SaleScreenState extends State<SaleScreen> with TickerProviderStateMixin {
             Text('Xuất dữ liệu'),
           ],
         ),
-        content: Text('Xuất ${_filteredSales.length} giao dịch bán mực ra file Excel?'),
+        content: Text('Xuất ${_filteredSales.length} giao dịch bán hàng ra file Excel?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1198,7 +1339,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
 
               // Squid type dropdown with quick add
               Text(
-                'LOẠI MỰC *',
+                'loại hàng *',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -1214,7 +1355,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       value: _selectedSquidTypeId,
                       style: TextStyle(fontSize: 18, color: Color(0xFF424242)),
                       decoration: InputDecoration(
-                        hintText: 'Chọn loại mực',
+                        hintText: 'Chọn loại hàng',
                         hintStyle: TextStyle(fontSize: 16),
                         prefixIcon: Icon(Icons.water_drop, size: 28, color: Color(0xFF1565C0)),
                         contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -1244,7 +1385,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       },
                       validator: (value) {
                         if (value == null) {
-                          return 'Vui lòng chọn loại mực';
+                          return 'Vui lòng chọn loại hàng';
                         }
                         return null;
                       },
@@ -1343,6 +1484,12 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                             hintText: 'Nhập giá',
                             hintStyle: TextStyle(fontSize: 16),
                             prefixIcon: Icon(Icons.attach_money, size: 28, color: Color(0xFFFF8F00)),
+                            suffixText: '₫/kg',
+                            suffixStyle: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
                             contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -1480,16 +1627,16 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       ],
                     ),
                   ),
-                                     DropdownMenuItem(
-                     value: 'partial',
-                     child: Row(
-                       children: [
-                         Icon(Icons.schedule, color: Color(0xFFFF8F00), size: 20),
-                         SizedBox(width: 8),
-                         Text('Thanh toán một phần', style: TextStyle(fontSize: 18)),
-                       ],
-                     ),
-                   ),
+                  DropdownMenuItem(
+                    value: 'partial',
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, color: Color(0xFFFF8F00), size: 20),
+                        SizedBox(width: 8),
+                        Text('Thanh toán một phần', style: TextStyle(fontSize: 18)),
+                      ],
+                    ),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -1887,7 +2034,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
               ),
               SizedBox(width: 12),
               Text(
-                'Thêm Loại Mực Nhanh',
+                'Thêm loại hàng Nhanh',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -1905,7 +2052,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TÊN LOẠI MỰC *',
+                    'TÊN loại hàng *',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1917,7 +2064,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     controller: nameController,
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: 'VD: Mực ống, Mực nang, Mực lá...',
+                      hintText: 'VD: hàng ống, hàng nang, hàng lá...',
                       hintStyle: TextStyle(fontSize: 14),
                       prefixIcon: Icon(Icons.water_drop, size: 24, color: Color(0xFF1565C0)),
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -1936,7 +2083,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Vui lòng nhập tên loại mực';
+                        return 'Vui lòng nhập tên loại hàng';
                       }
                       return null;
                     },
@@ -1956,7 +2103,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     maxLines: 3,
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(
-                      hintText: 'Nhập mô tả về loại mực này (tùy chọn)',
+                      hintText: 'Nhập mô tả về loại hàng này (tùy chọn)',
                       hintStyle: TextStyle(fontSize: 14),
                       prefixIcon: Padding(
                         padding: EdgeInsets.only(bottom: 40),
@@ -2027,7 +2174,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           children: [
                             Icon(Icons.check_circle, color: Colors.white),
                             SizedBox(width: 8),
-                            Text('Thêm loại mực "${nameController.text.trim()}" thành công'),
+                            Text('Thêm loại hàng "${nameController.text.trim()}" thành công'),
                           ],
                         ),
                         backgroundColor: Color(0xFF1565C0),
@@ -2037,7 +2184,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Lỗi thêm loại mực: $e'),
+                        content: Text('Lỗi thêm loại hàng: $e'),
                         backgroundColor: Colors.red,
                       ),
                     );

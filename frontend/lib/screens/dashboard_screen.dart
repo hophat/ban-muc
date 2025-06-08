@@ -25,7 +25,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     SaleScreen(),
     ExpenseScreen(),
     ReportScreen(),
-    ProfileScreen(),
   ];
 
   @override
@@ -60,11 +59,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart),
-              label: 'Mua mực',
+              label: 'Mua hàng',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.sell),
-              label: 'Bán mực',
+              label: 'Bán hàng',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_balance_wallet),
@@ -74,10 +73,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icon(Icons.assessment),
               label: 'Báo cáo',
             ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: 'Cài đặt',
-              ),
           ],
         ),
       ),
@@ -107,14 +102,23 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text('Quản Lý Trại Mực'),
+        title: Text('Quản Lý Trại hàng'),
         actions: [
+          IconButton(
+            icon: Icon(Icons.settings, size: 28),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => SettingScreen()),
+            ),
+            tooltip: 'Cài đặt',
+          ),
           IconButton(
             icon: Icon(Icons.logout, size: 28),
             onPressed: () => {
               authProvider.logout(),
               Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen())),
             },
+            tooltip: 'Đăng xuất',
           ),
         ],
       ),
@@ -246,8 +250,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 children: [
                   Expanded(
                     child: _buildQuickActionCard(
-                      'Mua mực mới',
-                      'Ghi nhận đợt mua mực',
+                      'Mua hàng mới',
+                      'Ghi nhận đợt mua hàng',
                       Icons.add_shopping_cart,
                       () => Navigator.push(context, MaterialPageRoute(builder: (_) => PurchaseScreen())),
                     ),
@@ -255,8 +259,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   SizedBox(width: 12),
                   Expanded(
                     child: _buildQuickActionCard(
-                      'Bán mực',
-                      'Ghi nhận bán mực',
+                      'Bán hàng',
+                      'Ghi nhận bán hàng',
                       Icons.point_of_sale,
                       () => Navigator.push(context, MaterialPageRoute(builder: (_) => SaleScreen())),
                     ),
@@ -315,7 +319,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                       children: [
                         if (recentPurchases.isNotEmpty) ...[
                           Text(
-                            'Mua mực gần đây:',
+                            'Mua hàng gần đây:',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           SizedBox(height: 8),
@@ -345,7 +349,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                         
                         if (recentSales.isNotEmpty) ...[
                           Text(
-                            'Bán mực gần đây:',
+                            'Bán hàng gần đây:',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           SizedBox(height: 8),

@@ -77,7 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Purchases
     Route::apiResource('purchases', PurchaseController::class);
-
+    // Route::post('/purchases', [PurchaseController::class, 'store']);
     // Sales
     Route::apiResource('sales', SaleController::class);
     Route::patch('/sales/{sale}/payment-status', [SaleController::class, 'updatePaymentStatus']);

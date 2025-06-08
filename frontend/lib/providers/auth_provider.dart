@@ -31,8 +31,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-    
-
       // Nếu không phải tài khoản demo, gọi API
       final response = await _apiService.login(phone, pin);
       if (response['token'] != null) {
@@ -46,18 +44,27 @@ class AuthProvider with ChangeNotifier {
           createdAt: DateTime.parse(response['user']['created_at']),
           updatedAt: DateTime.parse(response['user']['updated_at']),
         );
-        // _farm = _user!.farm!;
-        // Lấy thông tin farm
-        // final farmResponse = await _apiService.getFarm();
-        _farm = Farm(
-          id: _user!.farm!.id,
-          name: _user!.farm!.name,
-          address: _user!.farm!.address,
-          phone: _user!.farm!.phone,
-          description: _user!.farm!.description,
-          createdAt: _user!.farm!.createdAt,
-          updatedAt: _user!.farm!.updatedAt,
-        );  
+        
+        // Lấy thông tin farm nếu user có farm
+        if (_user?.farm != null) {
+          _farm = _user!.farm;
+        } else {
+          // Nếu là admin, lấy farm từ ownedFarm
+          if (_user?.role == 'admin') {
+            final farmResponse = await _apiService.getFarm();
+            if (farmResponse != null) {
+              _farm = Farm(
+                id: farmResponse['id'],
+                name: farmResponse['name'],
+                address: farmResponse['address'],
+                phone: farmResponse['phone'],
+                description: farmResponse['description'],
+                createdAt: DateTime.parse(farmResponse['created_at']),
+                updatedAt: DateTime.parse(farmResponse['updated_at']),
+              );
+            }
+          }
+        }
         
         _isAuthenticated = true;
         _isLoading = false;
@@ -151,12 +158,27 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _user = null;
-    _farm = null;
-    _isAuthenticated = false;
-    _error = null;
-    await _apiService.logout();
-    notifyListeners();
+    try {
+      // Reset tất cả state
+      _user = null;
+      _farm = null;
+      _isAuthenticated = false;
+      _error = null;
+      _isLoading = false;
+      
+      // Gọi API logout và xóa token
+      await _apiService.logout();
+    } catch (e) {
+      print('Logout error in AuthProvider: $e');
+      // Vẫn reset state ngay cả khi có lỗi
+      _user = null;
+      _farm = null;
+      _isAuthenticated = false;
+      _error = null;
+      _isLoading = false;
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<bool> checkAuthStatus() async {
@@ -169,21 +191,31 @@ class AuthProvider with ChangeNotifier {
           email: userResponse['email'],
           phone: userResponse['phone'],
           role: userResponse['role'],
+          farm: userResponse['farm'] != null ? Farm.fromJson(userResponse['farm']) : null,
           createdAt: DateTime.parse(userResponse['created_at']),
           updatedAt: DateTime.parse(userResponse['updated_at']),
         );
 
-        // Lấy thông tin farm
-        final farmResponse = await _apiService.getFarm();
-        _farm = Farm(
-          id: farmResponse['id'],
-          name: farmResponse['name'],
-          address: farmResponse['address'],
-          phone: farmResponse['phone'],
-          description: farmResponse['description'],
-          createdAt: DateTime.parse(farmResponse['created_at']),
-          updatedAt: DateTime.parse(farmResponse['updated_at']),
-        );
+        // Lấy thông tin farm nếu user có farm
+        if (_user?.farm != null) {
+          _farm = _user!.farm;
+        } else {
+          // Nếu là admin, lấy farm từ ownedFarm
+          if (_user?.role == 'admin') {
+            final farmResponse = await _apiService.getFarm();
+            if (farmResponse != null) {
+              _farm = Farm(
+                id: farmResponse['id'],
+                name: farmResponse['name'],
+                address: farmResponse['address'],
+                phone: farmResponse['phone'],
+                description: farmResponse['description'],
+                createdAt: DateTime.parse(farmResponse['created_at']),
+                updatedAt: DateTime.parse(farmResponse['updated_at']),
+              );
+            }
+          }
+        }
 
         _isAuthenticated = true;
         notifyListeners();
